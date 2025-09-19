@@ -1,1 +1,20 @@
+1. Introduction (18/8/2025 – 30/8/2025)
+Problem Statement
+Controlling computer systems traditionally requires manual interaction through keyboard and mouse.
+This can be time-consuming, less efficient, and difficult for differently-abled users.
+An AI-powered speech interface can provide a natural,
+hands-free way to control system operations using human voice commands.
 
+Objectives
+
+To design an AI-based interface that recognizes voice commands and controls system applications.
+To implement machine learning models for intent classification of commands.
+To integrate speech-to-text and text-to-speech for smooth interaction.
+To provide real-time, accurate, and efficient system control through voice.
+
+Application of the Project
+
+Hands-free system operation.
+Productivity enhancement for professionals and students.
+Accessibility support for physically challenged users.
+Integration in smart devices and office automation systems.
