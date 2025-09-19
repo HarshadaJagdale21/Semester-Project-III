@@ -1,1 +1,21 @@
-
+Hardware Requirements:
+Laptop/PC
+Microphone
+Software Requirements:
+Python 3.x
+Libraries: SpeechRecognition, pyttsx3, os, subprocess,
+IDE: VS Code
+System Design:
+Block Diagram:
+Voice Input → Speech-to-Text → Command Processing → System Control → Voice Output
+Data Flow Diagram:
+Level 0: User → Speech Interface → System Command Execution
+Dataset Used:
+For speech recognition, pretrained datasets like CMU Sphinx / Vosk model are used.
+Citation: Alpha Cephei, Vosk Speech Recognition Toolkit, https://alphacephei.com/vosk
+Algorithm:
+Step 1: Capture audio from microphone.
+Step 2: Convert speech to text (STT).
+Step 3: Match command with predefined actions.
+Step 4: Execute system-level task.
+Step 5: Convert response into speech (TTS).
