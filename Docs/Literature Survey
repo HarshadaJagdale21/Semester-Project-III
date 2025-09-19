@@ -1,1 +1,26 @@
+Literature Survey (01/09/2025 to 13/09/2025)
 
+Background:
+Voice-based AI systems are widely used in the form of Google Assistant, Siri, and Alexa. They improve user experience and accessibility. Our project aims to create a lightweight, system-specific speech control model.
+
+Existing Systems:
+
+Siri – Apple’s voice assistant for iOS/macOS.
+
+Google Assistant – Cross-platform voice AI by Google.
+
+Amazon Alexa – Smart home voice interface.
+
+Microsoft Cortana – System-level speech control assistant.
+
+Dragon NaturallySpeaking – Speech-to-text software.
+
+Limitations of Existing Systems:
+
+Require high internet connectivity.
+
+Limited system-level control.
+
+High cost for commercial solutions.
+
+Dependency on specific ecosystems.
