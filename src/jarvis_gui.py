@@ -1,209 +1,120 @@
-# jarvis_gui.py
-import tkinter as tk
-from tkinter import scrolledtext, ttk
-import pyttsx3
-import threading
-import queue
 import os
-import webbrowser
-import datetime
+import tkinter as tk
+import pyttsx3
 import speech_recognition as sr
-from dataset import DATASET
+import subprocess
+import dataset
+import webbrowser
 
-# -----------------------------
-# SPEECH SETUP
-# -----------------------------
+# ========== VOICE ENGINE ==========
 engine = pyttsx3.init()
 engine.setProperty('rate', 170)
+engine.setProperty('volume', 1.0)
 
-speech_queue = queue.Queue()
+def speak(text):
+    engine.say(text)
+    engine.runAndWait()
 
-def speak_worker():
-    while True:
-        text = speech_queue.get()
-        if text is None:
-            break
-        engine.say(text)
-        engine.runAndWait()
-        speech_queue.task_done()
+# ========== FILE SEARCH FUNCTION ==========
+def find_file(filename, search_path="C:\\"):
+    """Search entire system for a filename"""
+    for root, dirs, files in os.walk(search_path):
+        for file in files:
+            if filename.lower() in file.lower():
+                return os.path.join(root, file)
+    return None
 
-speech_thread = threading.Thread(target=speak_worker, daemon=True)
-speech_thread.start()
+# ========== OPEN ITEM ==========
+def open_item(item_name):
+    # Check in dataset
+    path = dataset.DATASET.get(item_name.lower())
 
-def speak_text(text):
-    speech_queue.put(text)
+    if path:
+        try:
+            os.startfile(os.path.expandvars(path))
+            speak(f"Opening {item_name}")
+            return
+        except Exception as e:
+            speak("Sorry, I could not open it.")
+            print(e)
+            return
 
-def stop_speaking():
-    engine.stop()
+    # Search the file system
+    speak(f"Searching for {item_name}, please wait...")
+    file_path = find_file(item_name)
 
-# -----------------------------
-# GUI CHAT BOX APPEND
-# -----------------------------
-def append_chat(text):
-    chat_box.after(0, lambda: _append(text))
-
-def _append(text):
-    chat_box.config(state="normal")
-    chat_box.insert(tk.END, text + "\n\n")
-    chat_box.config(state="disabled")
-    chat_box.see(tk.END)
-
-# -----------------------------
-# OPEN / CLOSE COMMANDS
-# -----------------------------
-open_processes = {}  # Track opened apps to close
-
-def execute_system_command(command):
-    command = command.lower().strip()
-
-    # -------------------- OPEN / CLOSE APPS --------------------
-    if command.startswith("open "):
-        name = command.replace("open ", "").strip()
-        name_key = name.lower()
-        if name_key in DATASET:
-            path = DATASET[name_key].replace("%USERNAME%", os.getlogin())
-            try:
-                proc = os.startfile(path)
-                open_processes[name_key] = path
-                speak_text(f"Opening {name}")
-                append_chat(f"Jarvis: Opening {name}")
-            except Exception as e:
-                speak_text(f"Cannot open {name}. Error: {e}")
-                append_chat(f"Jarvis: Cannot open {name}. Error: {e}")
-        else:
-            speak_text(f"Sorry, I could not find {name}")
-            append_chat(f"Jarvis: Sorry, I could not find {name}")
-        return
-
-    elif command.startswith("close "):
-        name = command.replace("close ", "").strip()
-        name_key = name.lower()
-        if name_key in open_processes:
-            try:
-                os.system(f"taskkill /f /im {os.path.basename(open_processes[name_key])}")
-                speak_text(f"Closed {name}")
-                append_chat(f"Jarvis: Closed {name}")
-                del open_processes[name_key]
-            except Exception as e:
-                speak_text(f"Cannot close {name}. Error: {e}")
-                append_chat(f"Jarvis: Cannot close {name}. Error: {e}")
-        else:
-            speak_text(f"{name} is not currently opened")
-            append_chat(f"Jarvis: {name} is not currently opened")
-        return
-
-    # -------------------- TIME --------------------
-    elif "time" in command:
-        now = datetime.datetime.now().strftime("%H:%M:%S")
-        speak_text(f"The time is {now}")
-        append_chat(f"Jarvis: The time is {now}")
-        return
-
-    # -------------------- MOTIVATION --------------------
-    elif "motivate" in command:
-        quotes = [
-            "Keep pushing, you can do it!",
-            "Believe in yourself and all that you are.",
-            "Every day is a new opportunity to shine."
-        ]
-        message = quotes[datetime.datetime.now().second % len(quotes)]
-        speak_text(message)
-        append_chat(f"Jarvis: {message}")
-        return
-
-    # -------------------- FALLBACK --------------------
+    if file_path:
+        try:
+            os.startfile(file_path)
+            speak(f"Found and opened {item_name}")
+        except Exception as e:
+            speak("Sorry, I could not open that file.")
+            print(e)
     else:
-        speak_text("Sorry, I didn’t understand that.")
-        append_chat("Jarvis: Sorry, I didn’t understand that.")
+        speak(f"Sorry, I could not find {item_name} on your computer.")
 
-# -----------------------------
-# VOICE COMMANDS
-# -----------------------------
-def listen_voice():
-    r = sr.Recognizer()
-    mic = sr.Microphone()
-    append_chat("🎤 Listening...")
-    speak_text("Listening...")
+# ========== VOICE COMMAND ==========
+def listen_command():
+    recognizer = sr.Recognizer()
+    with sr.Microphone() as source:
+        speak("Listening...")
+        audio = recognizer.listen(source, phrase_time_limit=5)
     try:
-        with mic as source:
-            r.adjust_for_ambient_noise(source)
-            audio = r.listen(source, timeout=5)
-        command = r.recognize_google(audio)
-        append_chat(f"You (voice): {command}")
-        threading.Thread(target=execute_system_command, args=(command,), daemon=True).start()
-    except sr.WaitTimeoutError:
-        append_chat("🎤 Listening timed out. Say your command again.")
-    except Exception as e:
-        append_chat(f"🎤 Voice error: {e}")
+        command = recognizer.recognize_google(audio).lower()
+        print(f"User said: {command}")
+        return command
+    except sr.UnknownValueError:
+        speak("Sorry, I didn't understand that.")
+        return ""
+    except sr.RequestError:
+        speak("Speech service error.")
+        return ""
 
-# -----------------------------
-# GUI COMMAND PROCESS
-# -----------------------------
-def process_command():
-    query = user_input.get().strip()
-    if not query:
-        return
-    append_chat("You: " + query)
-    user_input.delete(0, tk.END)
-    
-    if query.lower() in ["bye", "exit", "quit"]:
-        speak_text("Goodbye! Have a nice day.")
-        append_chat("Jarvis: Goodbye! Have a nice day.")
-        root.after(1000, root.destroy)
+# ========== HANDLE COMMANDS ==========
+def handle_command(command):
+    if not command:
         return
 
-    if query.lower() == "stop":
-        stop_speaking()
-        return
+    if "open" in command:
+        item = command.replace("open", "").strip()
+        open_item(item)
+    elif "close" in command:
+        app = command.replace("close", "").strip()
+        os.system(f"taskkill /f /im {app}.exe")
+        speak(f"Closed {app}")
+    elif "search" in command:
+        query = command.replace("search", "").strip()
+        webbrowser.open(f"https://www.google.com/search?q={query}")
+        speak(f"Searching {query} on Google")
+    elif "exit" in command or "quit" in command:
+        speak("Goodbye Harshada!")
+        root.destroy()
+    else:
+        speak("Sorry, I didn’t understand that command.")
 
-    threading.Thread(target=execute_system_command, args=(query,), daemon=True).start()
-
-# -----------------------------
-# BEAUTIFUL FRONTEND (UI ONLY)
-# -----------------------------
-root = tk.Tk()
-root.title("💬 Jarvis - Your Smart Assistant")
-root.geometry("900x650")
-root.config(bg="#1e1e2f")
-
-header = tk.Label(root, text="🤖 JARVIS AI ASSISTANT", font=("Helvetica", 22, "bold"), bg="#1e1e2f", fg="#00ffff")
-header.pack(pady=10)
-
-chat_frame = tk.Frame(root, bg="#2a2a3d", bd=3, relief="groove")
-chat_frame.pack(padx=20, pady=10, fill="both", expand=True)
-
-chat_box = scrolledtext.ScrolledText(chat_frame, wrap=tk.WORD, font=("Consolas", 12), bg="#2a2a3d", fg="#e0e0e0", insertbackground="#00ffff", relief="flat")
-chat_box.pack(fill="both", expand=True, padx=10, pady=10)
-chat_box.config(state="disabled")
-
-input_frame = tk.Frame(root, bg="#1e1e2f")
-input_frame.pack(pady=10, fill="x", padx=20)
-
-user_input = ttk.Entry(input_frame, font=("Consolas", 13))
-user_input.pack(side="left", fill="x", expand=True, padx=(0, 10))
-user_input.focus()
-
-style = ttk.Style()
-style.configure("TButton", font=("Helvetica", 12, "bold"), background="#00ffff", foreground="#1e1e2f", padding=6)
-
-send_button = ttk.Button(input_frame, text="Send", command=process_command)
-send_button.pack(side="right")
-
-voice_button = ttk.Button(input_frame, text="🎤 Speak", command=listen_voice)
-voice_button.pack(side="right", padx=10)
-
-footer = tk.Label(root, text="✨ Developed by Harshada • Powered by Python AI ✨", font=("Helvetica", 10), bg="#1e1e2f", fg="#888888")
-footer.pack(side="bottom", pady=5)
-
-root.bind('<Return>', lambda event: process_command())
-
-append_chat("Jarvis: Hello! I am your smart assistant. Type or speak your command below.")
-speak_text("Hello! I am your smart assistant. Type or speak your command below.")
-
-# -----------------------------
-# MAIN LOOP
-# -----------------------------
+# ========== GUI SETUP ==========
 def main():
+    global root
+    root = tk.Tk()
+    root.title("Jarvis Voice Assistant")
+    root.geometry("500x500")
+    root.configure(bg="#121212")
+
+    tk.Label(root, text="🎤 JARVIS - Voice Assistant", font=("Arial", 16, "bold"), fg="white", bg="#121212").pack(pady=15)
+
+    command_entry = tk.Entry(root, font=("Arial", 14))
+    command_entry.pack(pady=10, ipadx=10, ipady=5, fill=tk.X, padx=20)
+
+    def run_command():
+        command = command_entry.get().lower()
+        handle_command(command)
+        command_entry.delete(0, tk.END)
+
+    tk.Button(root, text="Run Command", font=("Arial", 12), command=run_command).pack(pady=10)
+    tk.Button(root, text="🎙 Speak", font=("Arial", 12), command=lambda: handle_command(listen_command())).pack(pady=10)
+
+    tk.Button(root, text="Exit", font=("Arial", 12), command=lambda: root.destroy()).pack(pady=10)
+
     root.mainloop()
 
 if __name__ == "__main__":
