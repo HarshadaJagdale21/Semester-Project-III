@@ -1,0 +1,33 @@
+Abstract
+
+1. Project Title:
+AI powered speech interface for system control
+
+2. Domain / Technology:
+Machine Learning, Computer Vision, Natural Language Processing, Speech Recognition.
+
+3. Application:
+Intelligent personal assistant for desktops, smart devices, and office productivity enhancement.
+
+4. Dataset (if applicable):
+Face Authentication: Custom captured face dataset for authorized users.
+Voice Commands: Self-created dataset of labeled voice-to-text commands for intent classification.
+
+5. Expected Algorithm / Processing:
+Face Recognition: Histogram of Oriented Gradients (HOG) + Support Vector Machine (SVM).
+Speech-to-Text: Google Speech Recognition API.
+Command Classification: Naïve Bayes / Logistic Regression for intent detection.
+Response Mapping: K-Nearest Neighbors (KNN) for selecting the most relevant action.
+
+6. Expected Output from Project:
+A secure ML-powered assistant capable of recognizing authorized users, classifying spoken commands, and performing automated tasks with appropriate responses.
+
+7. Abstract:
+The Machine Learning-Based Virtual Assistant “Jarvis” is designed as a secure and interactive personal assistant integrating computer vision, speech recognition, and classical machine learning algorithms. It employs HOG feature extraction with an SVM classifier for user face authentication, ensuring only authorized individuals can access the system. Once authenticated, the assistant listens for voice commands, converts them to text, and classifies the intent using Naïve Bayes or Logistic Regression. Based on the detected intent, the system executes the relevant task, such as opening applications,
+retrieving information, or performing basic automation. The responses are selected using a KNN-based matching system, and all interactions are stored in a local database. This project offers an efficient, lightweight, and secure AI assistant without the complexity of deep learning, making it suitable for real-time execution on standard hardware.
+
+Team Members:
+1. Jagdale Harshada Vinod (TY AIML – 04 – 231107002)
+2. Bharat Mrunal Madhukar (TY AIML – 10 – 231107008)
+3. Patil Jidnyasa Deepak (TY AIML – 13 – 231107011)
+4. Patil Srushti Mahesh (TY AIML – 14 – 231107012)
