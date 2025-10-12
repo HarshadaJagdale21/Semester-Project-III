@@ -11,7 +11,7 @@ import datetime
 import os
 import random
 import subprocess
-import speech_recognition as sr
+import psutil  # For closing apps
 
 # -----------------------------
 # SPEECH SETUP
@@ -70,13 +70,73 @@ def _append(text):
     chat_box.see(tk.END)
 
 # -----------------------------
-# EXECUTE USER COMMANDS
+# APPLICATION MAPPING
+# -----------------------------
+apps_paths = {
+    "vs code": r"C:\Users\%USERNAME%\AppData\Local\Programs\Microsoft VS Code\Code.exe",
+    "vscode": r"C:\Users\%USERNAME%\AppData\Local\Programs\Microsoft VS Code\Code.exe",
+    "chrome": r"C:\Program Files\Google\Chrome\Application\chrome.exe",
+    "word": r"C:\Program Files\Microsoft Office\root\Office16\WINWORD.EXE",
+    "excel": r"C:\Program Files\Microsoft Office\root\Office16\EXCEL.EXE",
+    "powerpoint": r"C:\Program Files\Microsoft Office\root\Office16\POWERPNT.EXE",
+    "notepad": "notepad.exe",
+    "whatsapp": r"C:\Users\%USERNAME%\AppData\Local\WhatsApp\WhatsApp.exe",
+    "calculator": "calc.exe",
+    "music": os.path.expanduser("~/Music"),
+    "downloads": os.path.expanduser("~/Downloads"),
+    "documents": os.path.expanduser("~/Documents"),
+    "desktop": os.path.expanduser("~/Desktop"),
+    "photos": os.path.expanduser("~/Pictures"),
+}
+
+# -----------------------------
+# EXECUTE SYSTEM COMMANDS
 # -----------------------------
 def execute_system_command(command):
     command = command.lower().strip()
-    
-    # Open websites
-    if "open youtube" in command:
+
+    # -------------------- OPEN / CLOSE APPS --------------------
+    if command.startswith("open "):
+        item = command.replace("open ", "").strip()
+        if item in apps_paths:
+            path = os.path.expandvars(apps_paths[item])
+            try:
+                if os.path.isdir(path):
+                    os.startfile(path)
+                else:
+                    subprocess.Popen(path)
+                speak_text(f"Opening {item}")
+                append_chat(f"Jarvis: Opening {item}")
+            except Exception as e:
+                speak_text(f"Cannot open {item}. Error: {e}")
+                append_chat(f"Jarvis: Cannot open {item}. Error: {e}")
+        else:
+            speak_text(f"Sorry, I could not find {item}")
+            append_chat(f"Jarvis: Sorry, I could not find {item}")
+        return
+
+    elif command.startswith("close "):
+        item = command.replace("close ", "").strip()
+        if item in apps_paths:
+            app_name = os.path.basename(apps_paths[item]).replace(".exe", "")
+            closed = False
+            for proc in psutil.process_iter():
+                if proc.name().lower() == app_name.lower() + ".exe":
+                    proc.terminate()
+                    closed = True
+            if closed:
+                speak_text(f"Closed {item}")
+                append_chat(f"Jarvis: Closed {item}")
+            else:
+                speak_text(f"{item} is not running")
+                append_chat(f"Jarvis: {item} is not running")
+        else:
+            speak_text(f"Sorry, I cannot close {item}")
+            append_chat(f"Jarvis: Sorry, I cannot close {item}")
+        return
+
+    # -------------------- OPEN WEBSITES --------------------
+    elif "open youtube" in command:
         speak_text("Opening YouTube for you.")
         append_chat("Jarvis: Opening YouTube for you.")
         webbrowser.open("https://youtube.com")
@@ -88,12 +148,14 @@ def execute_system_command(command):
         webbrowser.open("https://google.com")
         return
 
+    # -------------------- TIME --------------------
     elif "time" in command:
         now = datetime.datetime.now().strftime("%H:%M:%S")
         speak_text(f"The time is {now}")
         append_chat(f"Jarvis: The time is {now}")
         return
 
+    # -------------------- MOTIVATION --------------------
     elif "motivate" in command:
         quotes = [
             "Keep pushing, you can do it!",
@@ -105,56 +167,7 @@ def execute_system_command(command):
         append_chat(f"Jarvis: {message}")
         return
 
-    # Open/close apps & folders
-    app_paths = {
-        "vs code": r"C:\Users\%USERNAME%\AppData\Local\Programs\Microsoft VS Code\Code.exe",
-        "vscode": r"C:\Users\%USERNAME%\AppData\Local\Programs\Microsoft VS Code\Code.exe",
-        "chrome": r"C:\Program Files\Google\Chrome\Application\chrome.exe",
-        "word": r"C:\Program Files\Microsoft Office\root\Office16\WINWORD.EXE",
-        "excel": r"C:\Program Files\Microsoft Office\root\Office16\EXCEL.EXE",
-        "powerpoint": r"C:\Program Files\Microsoft Office\root\Office16\POWERPNT.EXE",
-        "notepad": "notepad.exe",
-        "downloads": os.path.expanduser("~/Downloads"),
-        "documents": os.path.expanduser("~/Documents"),
-        "desktop": os.path.expanduser("~/Desktop"),
-        "music": os.path.expanduser("~/Music"),
-        "videos": os.path.expanduser("~/Videos"),
-        "pictures": os.path.expanduser("~/Pictures")
-    }
-
-    if "open " in command:
-        item = command.replace("open ", "").strip()
-        if item in app_paths:
-            path = os.path.expandvars(app_paths[item])
-            try:
-                if os.path.isfile(path) or os.path.isdir(path):
-                    os.startfile(path)
-                    speak_text(f"Opening {item}")
-                    append_chat(f"Jarvis: Opening {item}")
-                else:
-                    subprocess.Popen(path)
-                    speak_text(f"Opening {item}")
-                    append_chat(f"Jarvis: Opening {item}")
-            except Exception as e:
-                speak_text(f"Cannot open {item}. Error: {e}")
-                append_chat(f"Jarvis: Cannot open {item}. Error: {e}")
-        else:
-            speak_text(f"Sorry, I could not find {item}")
-            append_chat(f"Jarvis: Sorry, I could not find {item}")
-        return
-
-    elif "close " in command:
-        item = command.replace("close ", "").strip()
-        try:
-            subprocess.call(["taskkill", "/f", "/im", f"{item}.exe"])
-            speak_text(f"Closed {item}")
-            append_chat(f"Jarvis: Closed {item}")
-        except:
-            speak_text(f"Could not close {item}")
-            append_chat(f"Jarvis: Could not close {item}")
-        return
-
-    # Wikipedia/DuckDuckGo
+    # -------------------- WIKIPEDIA / DUCKDUCKGO --------------------
     else:
         result = search_wikipedia_or_duckduckgo(command)
         append_chat("Jarvis: " + result)
@@ -181,28 +194,6 @@ def process_command():
         return
     
     threading.Thread(target=execute_system_command, args=(query,), daemon=True).start()
-
-# -----------------------------
-# VOICE COMMAND FUNCTION
-# -----------------------------
-def listen_voice_commands():
-    recognizer = sr.Recognizer()
-    microphone = sr.Microphone()
-    while True:
-        try:
-            append_chat("🎤 Listening...")
-            with microphone as source:
-                recognizer.adjust_for_ambient_noise(source)
-                audio = recognizer.listen(source)
-            command = recognizer.recognize_google(audio)
-            append_chat("You (voice): " + command)
-            threading.Thread(target=execute_system_command, args=(command,), daemon=True).start()
-        except sr.UnknownValueError:
-            append_chat("Jarvis: Sorry, I didn’t understand that.")
-            speak_text("Sorry, I didn’t understand that.")
-        except sr.RequestError:
-            append_chat("Jarvis: Sorry, I cannot connect to the speech service.")
-            speak_text("Sorry, I cannot connect to the speech service.")
 
 # -----------------------------
 # BEAUTIFUL FRONTEND (UI)
@@ -276,10 +267,6 @@ root.bind('<Return>', lambda event: process_command())
 # START MESSAGE
 append_chat("Jarvis: Hello! I am your smart assistant. Type or speak your command below.")
 speak_text("Hello! I am your smart assistant. Type or speak your command below.")
-
-# START VOICE LISTENER
-voice_thread = threading.Thread(target=listen_voice_commands, daemon=True)
-voice_thread.start()
 
 # -----------------------------
 # MAIN LOOP
