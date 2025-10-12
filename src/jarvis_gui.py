@@ -31,6 +31,7 @@ def find_file(filename, search_paths=["C:\\", "D:\\", "E:\\"]):
 
 # ===================== OPEN FILE/APP =====================
 def open_item(item_name):
+    speak(f"Searching for {item_name}")
     path = dataset.DATASET.get(item_name.lower())
     if path:
         try:
@@ -40,6 +41,7 @@ def open_item(item_name):
         except Exception as e:
             speak(f"Cannot open {item_name}. Error: {e}")
             return
+    speak("Looking for the file on your computer...")
     found = find_file(item_name)
     if found:
         try:
@@ -52,6 +54,7 @@ def open_item(item_name):
 
 # ===================== CLOSE APP =====================
 def close_item(app_name):
+    speak(f"Searching for any running process of {app_name}")
     closed_any = False
     for proc in psutil.process_iter(['pid', 'name']):
         try:
@@ -67,6 +70,7 @@ def close_item(app_name):
 
 # ===================== CLOSE ALL APPS =====================
 def close_all_apps():
+    speak("Closing all open applications except system processes.")
     for proc in psutil.process_iter(['pid', 'name']):
         try:
             if proc.info['name'].lower() not in ["explorer.exe", "python.exe"]:
@@ -78,9 +82,9 @@ def close_all_apps():
 # ===================== WIKIPEDIA INFO =====================
 def get_information(query):
     try:
-        speak("Searching...")
+        speak(f"Searching for {query} on Wikipedia.")
         result = wikipedia.summary(query, sentences=2)
-        speak(result)
+        speak("According to Wikipedia, " + result)
     except wikipedia.DisambiguationError:
         speak(f"Too many results for {query}. Try being more specific.")
     except wikipedia.PageError:
@@ -114,7 +118,7 @@ def listen_command():
     try:
         command = recognizer.recognize_google(audio).lower()
         status_label.config(text=f"🎤 You said: {command}", fg="cyan")
-        print(f"You said: {command}")
+        speak(f"You said {command}")
         return command
     except sr.UnknownValueError:
         status_label.config(text="❌ Didn't catch that.", fg="red")
@@ -131,6 +135,7 @@ def handle_command(command):
 
     status_label.config(text=f"Processing command: {command}", fg="white")
     root.update()
+    speak("Processing your command.")
 
     if "open" in command:
         item = command.replace("open", "").strip()
@@ -149,7 +154,7 @@ def handle_command(command):
         status_label.config(text=f"🌐 Searching for {query}...", fg="yellow")
         webbrowser.open(f"https://www.google.com/search?q={query}")
 
-    elif "what" in command or "who" in command or "when" in command or "where" in command or "tell me" in command:
+    elif any(word in command for word in ["what", "who", "when", "where", "tell me"]):
         query = command.replace("jarvis", "").replace("tell me", "").strip()
         get_information(query)
 
@@ -198,7 +203,7 @@ def main():
                             fg="white", bg="#101820")
     status_label.pack(pady=20)
 
-    speak("Hello Harshada! I am your Jarvis. All systems are online. How can I assist you?")
+    speak("Hello Harshada! I am your Jarvis. All systems are online and voice activated. How can I assist you now?")
     root.mainloop()
 
 if __name__ == "__main__":
