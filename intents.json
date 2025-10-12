@@ -1,0 +1,64 @@
+{
+  "intents": [
+    {
+      "tag": "greeting",
+      "patterns": ["hi", "hello", "hey", "good morning", "good evening", "how are you"],
+      "responses": ["Hi Harshada!", "Hello! How can I help?", "Hey! Nice to see you."],
+      "action": "none"
+    },
+    {
+      "tag": "goodbye",
+      "patterns": ["bye", "goodbye", "see you later", "quit"],
+      "responses": ["Goodbye Harshada!", "See you soon!", "Take care!"],
+      "action": "exit"
+    },
+    {
+      "tag": "time",
+      "patterns": ["what time is it", "tell me the time", "time please"],
+      "responses": ["Here’s the time for you!"],
+      "action": "tell_time"
+    },
+    {
+      "tag": "open_youtube",
+      "patterns": ["open youtube", "play youtube"],
+      "responses": ["Opening YouTube for you."],
+      "action": "open_youtube"
+    },
+    {
+      "tag": "open_google",
+      "patterns": ["open google", "search google"],
+      "responses": ["Opening Google for you."],
+      "action": "open_google"
+    },
+    {
+      "tag": "open_whatsapp",
+      "patterns": ["open whatsapp"],
+      "responses": ["Opening WhatsApp Web for you."],
+      "action": "open_whatsapp"
+    },
+    {
+      "tag": "wikipedia_search",
+      "patterns": ["search wikipedia for", "who is", "tell me about", "explain", "define"],
+      "responses": ["Here’s what I found."],
+      "action": "wikipedia_search"
+    },
+    {
+      "tag": "play_music",
+      "patterns": ["play music", "play song", "play my favorite song"],
+      "responses": ["Playing music for you."],
+      "action": "play_music"
+    },
+    {
+      "tag": "fun",
+      "patterns": ["tell me a joke", "motivate me", "give me a quote", "tell me a story", "I am bored"],
+      "responses": ["Sure! Here’s a joke for you.", "Here’s a motivational quote.", "Listen to this story."],
+      "action": "fun_action"
+    },
+    {
+      "tag": "stop_speaking",
+      "patterns": ["stop"],
+      "responses": ["Stopping speech now."],
+      "action": "stop"
+    }
+  ]
+}
