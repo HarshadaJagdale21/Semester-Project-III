@@ -118,19 +118,24 @@ def listen_command():
     try:
         command = recognizer.recognize_google(audio).lower()
         status_label.config(text=f"🎤 You said: {command}", fg="cyan")
+        print(f"You said: {command}")
         speak(f"You said {command}")
         return command
     except sr.UnknownValueError:
         status_label.config(text="❌ Didn't catch that.", fg="red")
-        speak("Sorry, I didn’t catch that.")
+        speak("Sorry, I didn’t catch that. Please say again.")
         return ""
     except sr.RequestError:
-        speak("Speech recognition service is not working.")
+        status_label.config(text="⚠️ Speech recognition error", fg="red")
+        speak("Speech recognition service is not working right now.")
         return ""
+
 
 # ===================== HANDLE COMMANDS =====================
 def handle_command(command):
     if not command:
+        speak(f"Processing your command {command}")
+
         return
 
     status_label.config(text=f"Processing command: {command}", fg="white")
