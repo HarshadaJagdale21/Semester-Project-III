@@ -14,15 +14,14 @@ engine = pyttsx3.init()
 engine.setProperty('rate', 170)
 engine.setProperty('volume', 1.0)
 
-# ===================== SPEAK FUNCTION ==========================
+# ===================== SPEAK FUNCTION ========================
 def speak(text):
     print(f"Jarvis: {text}")
     engine.say(text)
     engine.runAndWait()
 
-# ===================== SEARCH FILE FUNCTION =====================
+# ===================== SEARCH FILE FUNCTION =================
 def find_file(filename, search_paths=["C:\\", "D:\\", "E:\\"]):
-    speak(f"Looking for {filename} on your PC...")
     for path in search_paths:
         for root, dirs, files in os.walk(path):
             for file in files:
@@ -30,9 +29,9 @@ def find_file(filename, search_paths=["C:\\", "D:\\", "E:\\"]):
                     return os.path.join(root, file)
     return None
 
-# ===================== OPEN FILE/APP =====================
+# ===================== OPEN FILE/APP ========================
 def open_item(item_name):
-    speak(f"Trying to open {item_name}")
+    speak(f"Searching for {item_name}")
     path = dataset.DATASET.get(item_name.lower())
     if path:
         try:
@@ -42,6 +41,7 @@ def open_item(item_name):
         except Exception as e:
             speak(f"Cannot open {item_name}. Error: {e}")
             return
+    speak("Looking for the file on your computer...")
     found = find_file(item_name)
     if found:
         try:
@@ -52,9 +52,9 @@ def open_item(item_name):
     else:
         speak(f"Sorry, I couldn’t find {item_name}")
 
-# ===================== CLOSE APP =====================
+# ===================== CLOSE APP ============================
 def close_item(app_name):
-    speak(f"Checking for running instances of {app_name}")
+    speak(f"Searching for any running process of {app_name}")
     closed_any = False
     for proc in psutil.process_iter(['pid', 'name']):
         try:
@@ -68,9 +68,9 @@ def close_item(app_name):
     else:
         speak(f"No running app named {app_name} found")
 
-# ===================== CLOSE ALL APPS =====================
+# ===================== CLOSE ALL APPS =======================
 def close_all_apps():
-    speak("Closing all open applications except system processes...")
+    speak("Closing all open applications except system processes.")
     for proc in psutil.process_iter(['pid', 'name']):
         try:
             if proc.info['name'].lower() not in ["explorer.exe", "python.exe"]:
@@ -79,20 +79,20 @@ def close_all_apps():
             pass
     speak("All applications have been closed.")
 
-# ===================== WIKIPEDIA INFO =====================
+# ===================== WIKIPEDIA INFO =======================
 def get_information(query):
     try:
-        speak(f"Searching Wikipedia for {query}")
+        speak(f"Searching for {query} on Wikipedia.")
         result = wikipedia.summary(query, sentences=2)
         speak("According to Wikipedia, " + result)
     except wikipedia.DisambiguationError:
-        speak(f"Too many results for {query}. Please be more specific.")
+        speak(f"Too many results for {query}. Try being more specific.")
     except wikipedia.PageError:
         speak(f"Sorry, I couldn't find any information about {query}.")
     except Exception:
         speak("Something went wrong while searching.")
 
-# ===================== SYSTEM COMMANDS =====================
+# ===================== SYSTEM COMMANDS ======================
 def shutdown_pc():
     speak("Shutting down the computer in 5 seconds.")
     time.sleep(5)
@@ -113,31 +113,32 @@ def listen_command():
     with sr.Microphone() as source:
         status_label.config(text="🎧 Listening...", fg="yellow")
         root.update()
-        speak("I am listening...")
-        try:
-            audio = recognizer.listen(source, phrase_time_limit=5)
-            command = recognizer.recognize_google(audio).lower()
-            status_label.config(text=f"🎤 You said: {command}", fg="cyan")
-            speak(f"You said: {command}")
-            return command
-        except sr.UnknownValueError:
-            status_label.config(text="❌ Didn't catch that.", fg="red")
-            speak("Sorry, I didn’t catch that. Please say again.")
-            return ""
-        except sr.RequestError:
-            status_label.config(text="⚠️ Speech recognition error", fg="red")
-            speak("Speech recognition service is not working right now.")
-            return ""
+        speak("I am listening. Please say your command.")
+        audio = recognizer.listen(source, phrase_time_limit=5)
+    try:
+        command = recognizer.recognize_google(audio).lower()
+        status_label.config(text=f"🎤 You said: {command}", fg="cyan")
+        print(f"You said: {command}")
+        speak(f"You said {command}")
+        return command
+    except sr.UnknownValueError:
+        status_label.config(text="❌ Didn't catch that.", fg="red")
+        speak("Sorry, I didn’t catch that. Please say again.")
+        return ""
+    except sr.RequestError:
+        status_label.config(text="⚠️ Speech recognition error", fg="red")
+        speak("Speech recognition service is not working right now.")
+        return ""
 
 # ===================== HANDLE COMMANDS =====================
 def handle_command(command):
     if not command:
-        speak("No command received. Please say or type something.")
+        speak("I did not hear anything. Please repeat.")
         return
 
-    speak(f"Processing your command: {command}")
     status_label.config(text=f"Processing command: {command}", fg="white")
     root.update()
+    speak(f"Processing your command: {command}")
 
     if "open" in command:
         item = command.replace("open", "").strip()
@@ -177,7 +178,7 @@ def handle_command(command):
         speak("Sorry, I didn’t understand that command. Please try again.")
         status_label.config(text="⚠️ Unknown command", fg="red")
 
-# ===================== MAIN UI =====================
+# ===================== MAIN UI ============================
 def main():
     global root, status_label
     root = tk.Tk()
@@ -193,8 +194,6 @@ def main():
 
     def run_command():
         command = command_entry.get().lower()
-        if command:
-            speak(f"You typed: {command}")
         handle_command(command)
         command_entry.delete(0, tk.END)
 
