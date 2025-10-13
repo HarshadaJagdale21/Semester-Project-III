@@ -214,7 +214,7 @@ def main():
                             fg="white", bg="#101820")
     status_label.pack(pady=20)
 
-    speak("Hello Harshada! I am your Jarvis. All systems are online and voice activated. How can I assist you now?")
+    speak("Hello ! I am your Jarvis. All systems are online and voice activated. How can I assist you now?")
     root.mainloop()
 
 if __name__ == "__main__":
