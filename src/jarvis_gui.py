@@ -14,25 +14,28 @@ engine = pyttsx3.init()
 engine.setProperty('rate', 170)
 engine.setProperty('volume', 1.0)
 
-# ===================== SPEAK FUNCTION ========================
+# ===================== SPEAK FUNCTION ==========================
 def speak(text):
     print(f"Jarvis: {text}")
     engine.say(text)
     engine.runAndWait()
 
-# ===================== SEARCH FILE FUNCTION =================
+# ===================== SEARCH FILE FUNCTION =====================
 def find_file(filename, search_paths=["C:\\", "D:\\", "E:\\"]):
+    """Search entire drives for an app or file by name"""
     for path in search_paths:
         for root, dirs, files in os.walk(path):
             for file in files:
-                if filename.lower() in file.lower():
+                if filename.lower() in file.lower() and file.endswith(".exe"):
                     return os.path.join(root, file)
     return None
 
-# ===================== OPEN FILE/APP ========================
+# ===================== OPEN FILE/APP =====================
 def open_item(item_name):
     speak(f"Searching for {item_name}")
     path = dataset.DATASET.get(item_name.lower())
+
+    # 1️⃣ Try dataset path
     if path:
         try:
             os.startfile(os.path.expandvars(path))
@@ -40,21 +43,24 @@ def open_item(item_name):
             return
         except Exception as e:
             speak(f"Cannot open {item_name}. Error: {e}")
-            return
-    speak("Looking for the file on your computer...")
+
+    # 2️⃣ Try searching locally
+    speak(f"I couldn't find {item_name} in my list. Searching your computer...")
     found = find_file(item_name)
     if found:
         try:
             os.startfile(found)
             speak(f"Found and opened {item_name}")
-        except Exception:
-            speak(f"Could not open {item_name}")
+            # 🧠 Save the new found path for next time
+            dataset.DATASET[item_name.lower()] = found
+        except Exception as e:
+            speak(f"Could not open {item_name}. Error: {e}")
     else:
-        speak(f"Sorry, I couldn’t find {item_name}")
+        speak(f"Sorry, I could not find {item_name} on your system.")
 
-# ===================== CLOSE APP ============================
+# ===================== CLOSE APP =====================
 def close_item(app_name):
-    speak(f"Searching for any running process of {app_name}")
+    speak(f"Trying to close {app_name}")
     closed_any = False
     for proc in psutil.process_iter(['pid', 'name']):
         try:
@@ -66,9 +72,9 @@ def close_item(app_name):
     if closed_any:
         speak(f"Closed {app_name}")
     else:
-        speak(f"No running app named {app_name} found")
+        speak(f"No running app named {app_name} found.")
 
-# ===================== CLOSE ALL APPS =======================
+# ===================== CLOSE ALL APPS =====================
 def close_all_apps():
     speak("Closing all open applications except system processes.")
     for proc in psutil.process_iter(['pid', 'name']):
@@ -79,7 +85,7 @@ def close_all_apps():
             pass
     speak("All applications have been closed.")
 
-# ===================== WIKIPEDIA INFO =======================
+# ===================== WIKIPEDIA INFO =====================
 def get_information(query):
     try:
         speak(f"Searching for {query} on Wikipedia.")
@@ -92,7 +98,7 @@ def get_information(query):
     except Exception:
         speak("Something went wrong while searching.")
 
-# ===================== SYSTEM COMMANDS ======================
+# ===================== SYSTEM COMMANDS =====================
 def shutdown_pc():
     speak("Shutting down the computer in 5 seconds.")
     time.sleep(5)
@@ -113,8 +119,8 @@ def listen_command():
     with sr.Microphone() as source:
         status_label.config(text="🎧 Listening...", fg="yellow")
         root.update()
-        speak("I am listening. Please say your command.")
-        audio = recognizer.listen(source, phrase_time_limit=5)
+        speak("Listening now...")
+        audio = recognizer.listen(source, phrase_time_limit=6)
     try:
         command = recognizer.recognize_google(audio).lower()
         status_label.config(text=f"🎤 You said: {command}", fg="cyan")
@@ -133,12 +139,12 @@ def listen_command():
 # ===================== HANDLE COMMANDS =====================
 def handle_command(command):
     if not command:
-        speak("I did not hear anything. Please repeat.")
+        speak("Please give a command again.")
         return
 
     status_label.config(text=f"Processing command: {command}", fg="white")
     root.update()
-    speak(f"Processing your command: {command}")
+    speak("Processing your command.")
 
     if "open" in command:
         item = command.replace("open", "").strip()
@@ -175,10 +181,10 @@ def handle_command(command):
         root.destroy()
 
     else:
-        speak("Sorry, I didn’t understand that command. Please try again.")
+        speak("Sorry, I didn’t understand that command.")
         status_label.config(text="⚠️ Unknown command", fg="red")
 
-# ===================== MAIN UI ============================
+# ===================== MAIN UI =====================
 def main():
     global root, status_label
     root = tk.Tk()
@@ -197,10 +203,12 @@ def main():
         handle_command(command)
         command_entry.delete(0, tk.END)
 
-    tk.Button(root, text="Run Command", font=("Arial", 12), command=run_command).pack(pady=10)
+    tk.Button(root, text="Run Command", font=("Arial", 12),
+              command=run_command).pack(pady=10)
     tk.Button(root, text="🎤 Speak", font=("Arial", 12),
               command=lambda: handle_command(listen_command())).pack(pady=10)
-    tk.Button(root, text="Exit", font=("Arial", 12), command=lambda: root.destroy()).pack(pady=10)
+    tk.Button(root, text="Exit", font=("Arial", 12),
+              command=lambda: root.destroy()).pack(pady=10)
 
     status_label = tk.Label(root, text="Status: Ready", font=("Arial", 12),
                             fg="white", bg="#101820")
